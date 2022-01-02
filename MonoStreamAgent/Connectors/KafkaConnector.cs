@@ -9,26 +9,33 @@ namespace MonoStreamAgent.Connectors
 {
     public class KafkaConnector
     {
-        Dictionary<string, string> consumerConfig = new Dictionary<string, string>
-            {
-                {"bootstrap.servers", "127.0.0.1:9093"},
-                {"group.id", "mayan"}
-            };
-        
         public void Consume()
         {
+            ClientConfig kConfig = new ClientConfig(new Dictionary<string, string>
+            {
+                {"bootstrap.servers", "localhost:29092"}
+            });
+
+            ConsumerConfig consumerConfig = new ConsumerConfig(kConfig)
+            {
+                GroupId = "mayan",
+                //AutoOffsetReset = AutoOffsetReset.Earliest,
+                EnableAutoCommit = false
+            };
+
             ConsumerBuilder<string, string> builder = new ConsumerBuilder<string, string>(consumerConfig);
 
-            IConsumer<string, string> consumer = builder.Build();
+            using IConsumer<string, string> consumer = builder.Build();
+            consumer.Subscribe("my.cars");
 
-            consumer.Subscribe("test");
-
-            ConsumeResult<string, string> res = consumer.Consume(7000);
-
-            if (res != null)
+            ConsumeResult<string, string> res = null;
+            
+            while (res == null)
             {
-                Console.WriteLine(res);
+                res = consumer.Consume(1);
             }
+
+            Console.WriteLine(res.Message.Value);
         }
     }
 }
