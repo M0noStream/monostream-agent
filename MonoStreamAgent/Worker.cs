@@ -1,6 +1,7 @@
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
-using MonoStreamAgent.Connectors;
+using MonoStreamAgent.Common;
+using MonoStreamAgent.Readers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -20,15 +21,15 @@ namespace MonoStreamAgent
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
-            Console.WriteLine("Mayan test");
-            KafkaConnector kafka = new KafkaConnector();
+            KafkaConsumer kafka = new KafkaConsumer();
 
-            kafka.Consume();
-            //while (!stoppingToken.IsCancellationRequested)
-            //{
-            //    _logger.LogInformation("Worker running at: {time}", DateTimeOffset.Now);
-            //    await Task.Delay(1000, stoppingToken);
-            //}
+            while (!stoppingToken.IsCancellationRequested)
+            {
+                MonoDTO data = kafka.Read();
+
+                _logger.LogDebug("Worker running at: {time}", DateTimeOffset.Now);
+                await Task.Delay(1000, stoppingToken);
+            }
         }
     }
 }

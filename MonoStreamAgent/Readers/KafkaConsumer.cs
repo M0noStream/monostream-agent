@@ -4,13 +4,16 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 using Confluent.Kafka;
+using MonoStreamAgent.Common;
 
-namespace MonoStreamAgent.Connectors
+namespace MonoStreamAgent.Readers
 {
-    public class KafkaConnector
+    public class KafkaConsumer : IDataReader
     {
-        public void Consume()
+        public MonoDTO Read()
         {
+            MonoDTO res = new MonoDTO();
+
             ClientConfig kConfig = new ClientConfig(new Dictionary<string, string>
             {
                 {"bootstrap.servers", "localhost:29092"}
@@ -19,7 +22,6 @@ namespace MonoStreamAgent.Connectors
             ConsumerConfig consumerConfig = new ConsumerConfig(kConfig)
             {
                 GroupId = "mayan",
-                //AutoOffsetReset = AutoOffsetReset.Earliest,
                 EnableAutoCommit = false
             };
 
@@ -28,14 +30,17 @@ namespace MonoStreamAgent.Connectors
             using IConsumer<string, string> consumer = builder.Build();
             consumer.Subscribe("my.cars");
 
-            ConsumeResult<string, string> res = null;
+            ConsumeResult<string, string> consumeRes = null;
             
-            while (res == null)
+            while (consumeRes == null)
             {
-                res = consumer.Consume(1);
+                consumeRes = consumer.Consume(1);
             }
 
-            Console.WriteLine(res.Message.Value);
+            res.SourceType = DataPlatformEnum.Kafka;
+            res.data = consumeRes.Message.Value;
+
+            return res;
         }
     }
 }

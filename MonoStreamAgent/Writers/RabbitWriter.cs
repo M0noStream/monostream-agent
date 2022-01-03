@@ -4,11 +4,9 @@ using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
 
-namespace MonoStreamAgent.Common
+namespace MonoStreamAgent.Writers
 {
-    public enum DataPlatformEnum
+    class RabbitWriter
     {
-        Kafka,
-        Rabbit
     }
 }
