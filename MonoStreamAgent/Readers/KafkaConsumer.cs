@@ -8,33 +8,41 @@ using MonoStreamAgent.Common;
 
 namespace MonoStreamAgent.Readers
 {
-    public class KafkaConsumer : IDataReader
+    public class KafkaConsumer : IDataReader, IDisposable
     {
-        public MonoDTO Read()
+        private IConsumer<string, string> _consumer;
+        public KafkaConsumer()
         {
-            MonoDTO res = new MonoDTO();
-
             ClientConfig kConfig = new ClientConfig(new Dictionary<string, string>
             {
-                {"bootstrap.servers", "localhost:29092"}
+                {"bootstrap.servers", "localhost:9092"}
             });
 
             ConsumerConfig consumerConfig = new ConsumerConfig(kConfig)
             {
-                GroupId = "mayan",
+                GroupId = "M0noStream-Kafka-Rabbit",
                 EnableAutoCommit = false
             };
 
             ConsumerBuilder<string, string> builder = new ConsumerBuilder<string, string>(consumerConfig);
 
-            using IConsumer<string, string> consumer = builder.Build();
-            consumer.Subscribe("my.cars");
+            _consumer = builder.Build();
+            _consumer.Subscribe("sample-messages");
+        }
 
+        public void Dispose()
+        {
+            _consumer.Dispose();
+        }
+
+        public MonoDTO Read()
+        {
+            MonoDTO res = new MonoDTO();
             ConsumeResult<string, string> consumeRes = null;
             
             while (consumeRes == null)
             {
-                consumeRes = consumer.Consume(1);
+                consumeRes = _consumer.Consume(1);
             }
 
             res.SourceType = DataPlatformEnum.Kafka;

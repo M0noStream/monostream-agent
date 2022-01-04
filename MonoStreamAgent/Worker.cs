@@ -2,6 +2,7 @@ using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using MonoStreamAgent.Common;
 using MonoStreamAgent.Readers;
+using MonoStreamAgent.Writers;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -22,13 +23,17 @@ namespace MonoStreamAgent
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)
         {
             KafkaConsumer kafka = new KafkaConsumer();
+            RabbitProducer rabbit = new RabbitProducer();
 
             while (!stoppingToken.IsCancellationRequested)
             {
                 MonoDTO data = kafka.Read();
+                _logger.LogDebug($"Finished Reading from Kafka - {data}");
 
-                _logger.LogDebug("Worker running at: {time}", DateTimeOffset.Now);
-                await Task.Delay(1000, stoppingToken);
+                rabbit.Write(data);
+                _logger.LogDebug($"Finished Writing to Rabbit - {data}");
+
+                await Task.Delay(100, stoppingToken);
             }
         }
     }

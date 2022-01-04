@@ -9,6 +9,6 @@ namespace MonoStreamAgent.Writers
 {
     public interface IDataWriter
     {
-        public void write(MonoDTO data);
+        public void Write(MonoDTO data);
     }
 }

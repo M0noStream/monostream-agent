@@ -13,5 +13,10 @@ namespace MonoStreamAgent.Common
     {
         public DataPlatformEnum SourceType { get; set; }
         public string data { get; set; }
+
+        public override string ToString()
+        {
+            return $"SourceType: {SourceType}\nData: {data}";
+        }
     }
 }

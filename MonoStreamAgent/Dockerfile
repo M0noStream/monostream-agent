@@ -18,3 +18,6 @@ FROM base AS final
 WORKDIR /app
 COPY --from=publish /app/publish .
 ENTRYPOINT ["dotnet", "MonoStreamAgent.dll"]
+
+EXPOSE 9092
+EXPOSE 5672
