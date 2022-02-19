@@ -30,11 +30,6 @@ namespace MonoStreamAgent.Readers
             _consumer.Subscribe("sample-messages");
         }
 
-        public void Dispose()
-        {
-            _consumer.Dispose();
-        }
-
         public MonoDTO Read()
         {
             MonoDTO res = new MonoDTO();
@@ -49,6 +44,11 @@ namespace MonoStreamAgent.Readers
             res.data = consumeRes.Message.Value;
 
             return res;
+        }
+
+        public void Dispose()
+        {
+            _consumer.Dispose();
         }
     }
 }
