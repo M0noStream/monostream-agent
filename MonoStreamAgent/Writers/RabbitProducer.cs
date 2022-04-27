@@ -34,7 +34,7 @@ namespace MonoStreamAgent.Writers
         {
             // RabbitMQ can't publish string as a message
             // Parsing to byte[]
-            byte[] body = Encoding.UTF8.GetBytes(data.data);
+            byte[] body = Encoding.UTF8.GetBytes(data.Data);
 
             _channel.BasicPublish("", _queue, null, body);
         }

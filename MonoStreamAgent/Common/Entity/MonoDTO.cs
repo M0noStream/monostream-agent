@@ -12,11 +12,11 @@ namespace MonoStreamAgent.Common
     public class MonoDTO
     {
         public DataPlatformEnum SourceType { get; set; }
-        public string data { get; set; }
+        public string Data { get; set; }
 
         public override string ToString()
         {
-            return $"SourceType: {SourceType}\nData: {data}";
+            return $"SourceType: {SourceType}\nData: {Data}";
         }
     }
 }

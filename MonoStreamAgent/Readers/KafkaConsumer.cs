@@ -41,7 +41,7 @@ namespace MonoStreamAgent.Readers
             }
 
             res.SourceType = DataPlatformEnum.Kafka;
-            res.data = consumeRes.Message.Value;
+            res.Data = consumeRes.Message.Value;
 
             return res;
         }

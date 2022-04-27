@@ -1,3 +1,4 @@
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Serilog;
@@ -38,8 +39,15 @@ namespace MonoStreamAgent
             Host.CreateDefaultBuilder(args)
                 .ConfigureServices((hostContext, services) =>
                 {
+                    IConfiguration configuration = hostContext.Configuration;
+
+                    services.Configure<AppData>(configuration.GetSection(nameof(AppData)));
+
                     services.AddHostedService<Worker>();
                 })
-                .UseSerilog();
+                .ConfigureLogging(logging =>
+                {
+                    logging.AddSerilog();
+                });
     }
 }
