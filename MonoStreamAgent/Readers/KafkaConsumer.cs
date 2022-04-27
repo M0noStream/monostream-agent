@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Confluent.Kafka;
 using MonoStreamAgent.Common;
 
@@ -37,7 +34,7 @@ namespace MonoStreamAgent.Readers
             
             while (consumeRes == null)
             {
-                consumeRes = _consumer.Consume(1);
+                consumeRes = _consumer.Consume(10000);
             }
 
             res.SourceType = DataPlatformEnum.Kafka;

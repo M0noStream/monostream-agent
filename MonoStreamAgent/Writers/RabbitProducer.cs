@@ -1,10 +1,7 @@
 ﻿using MonoStreamAgent.Common;
 using RabbitMQ.Client;
 using System;
-using System.Collections.Generic;
-using System.Linq;
 using System.Text;
-using System.Threading.Tasks;
 
 namespace MonoStreamAgent.Writers
 {
@@ -43,7 +40,6 @@ namespace MonoStreamAgent.Writers
         {
             _channel.Dispose();
             _connection.Dispose();
-
         }
     }
 }
