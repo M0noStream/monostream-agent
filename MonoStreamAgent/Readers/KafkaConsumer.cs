@@ -1,8 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using Confluent.Kafka;
 using MonoStreamAgent.Common;
 
@@ -30,11 +27,6 @@ namespace MonoStreamAgent.Readers
             _consumer.Subscribe("sample-messages");
         }
 
-        public void Dispose()
-        {
-            _consumer.Dispose();
-        }
-
         public MonoDTO Read()
         {
             MonoDTO res = new MonoDTO();
@@ -42,13 +34,18 @@ namespace MonoStreamAgent.Readers
             
             while (consumeRes == null)
             {
-                consumeRes = _consumer.Consume(1);
+                consumeRes = _consumer.Consume(10000);
             }
 
             res.SourceType = DataPlatformEnum.Kafka;
-            res.data = consumeRes.Message.Value;
+            res.Data = consumeRes.Message.Value;
 
             return res;
+        }
+
+        public void Dispose()
+        {
+            _consumer.Dispose();
         }
     }
 }

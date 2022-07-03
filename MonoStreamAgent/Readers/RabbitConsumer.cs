@@ -1,11 +1,11 @@
-﻿using MonoStreamAgent.Common;
-using RabbitMQ.Client;
-using System;
+﻿using System;
 using System.Text;
+using MonoStreamAgent.Common;
+using RabbitMQ.Client;
 
-namespace MonoStreamAgent.Writers
+namespace MonoStreamAgent.Readers
 {
-    public class RabbitProducer : IDataWriter, IDisposable
+    public class RabbitConsumer : IDataReader, IDisposable
     {
         private string _user = "guest";
         private string _password = "guest";
@@ -14,10 +14,10 @@ namespace MonoStreamAgent.Writers
         private IConnection _connection;
         private IModel _channel;
 
-        public RabbitProducer()
+        public RabbitConsumer()
         {
             ConnectionFactory factory = new ConnectionFactory()
-                        { Uri = new Uri($"amqp://{_user}:{_password}@{_url}") };
+            { Uri = new Uri($"amqp://{_user}:{_password}@{_url}") };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(_queue,
@@ -27,13 +27,20 @@ namespace MonoStreamAgent.Writers
                                  arguments: null);
         }
 
-        public void Write(MonoDTO data)
+        public MonoDTO Read()
         {
-            // RabbitMQ can't publish string as a message
-            // Parsing to byte[]
-            byte[] body = Encoding.UTF8.GetBytes(data.Data);
+            MonoDTO res = new MonoDTO();
+            BasicGetResult consumeRes = null;
 
-            _channel.BasicPublish("", _queue, null, body);
+            while (consumeRes == null)
+            {
+                consumeRes = _channel.BasicGet(_queue, true);
+            }
+
+            res.SourceType = DataPlatformEnum.RabbitMQ;
+            res.Data = Encoding.UTF8.GetString(consumeRes.Body.ToArray());
+
+            return res;
         }
 
         public void Dispose()
