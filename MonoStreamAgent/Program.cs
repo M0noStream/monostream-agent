@@ -12,11 +12,12 @@ namespace MonoStreamAgent
         public static void Main(string[] args)
         {
             Log.Logger = new LoggerConfiguration()
-                .MinimumLevel.Debug()
-                .MinimumLevel.Override("Microsoft", LogEventLevel.Warning)
-                .Enrich.FromLogContext()
-                .WriteTo.File(@"C:\Log\MonoAgentService\LogFile.txt")
-                .CreateLogger();
+                .WriteTo.File(
+                path: "logs\\log-.txt",//where to save
+                outputTemplate: "{Timestamp:yyyy-MM-dd HH:mm:ss.fff zzz} [{Level:u3}] {Message:lj}{NewLine}{Exception}",
+                rollingInterval: RollingInterval.Day,//everyday a new file is generated
+                restrictedToMinimumLevel: LogEventLevel.Information
+            ).CreateLogger();
 
             try
             {
@@ -37,6 +38,8 @@ namespace MonoStreamAgent
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
             Host.CreateDefaultBuilder(args)
+            .UseSystemd()
+            .UseWindowsService()
                 .ConfigureServices((hostContext, services) =>
                 {
                     IConfiguration configuration = hostContext.Configuration;

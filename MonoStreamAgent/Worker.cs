@@ -29,36 +29,25 @@ namespace MonoStreamAgent
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-
-            InitSource(cancellationToken);
-            InitDestination(cancellationToken);
+            if (_appData.IsTransacted)
+            {
+                InitTransaction(cancellationToken);
+            }
+            else
+            {
+                InitSource(cancellationToken);
+                InitDestination(cancellationToken);
+            }
 
             return base.StartAsync(cancellationToken);
         }
 
         private void InitSource(CancellationToken cancellationToken)
         {
-            int maxInnerQueueDepth = 100;
             srcTask = Task.Factory.StartNew(() =>
             {
-                IDataReader consumer;
-
-                switch (_appData.Source.TypeName)
-                {
-                    case DataPlatformEnum.Kafka:
-                        {
-                            consumer = new KafkaConsumer();
-                            break;
-                        }
-                    case DataPlatformEnum.RabbitMQ:
-                        {
-
-                            consumer = new RabbitConsumer();
-                            break;
-                        }
-                    default:
-                        throw new ArgumentException("Unknown Data Platform");
-                }
+                IDataReader consumer = InitConsumer();
+                int maxInnerQueueDepth = _appData.InnerQueueDepth;
 
                 while (!cancellationToken.IsCancellationRequested)
                 {
@@ -66,34 +55,16 @@ namespace MonoStreamAgent
                     {
                         _messages.Enqueue(consumer.Read());
                     }
-                    Task.Delay(10, cancellationToken);
+                    SpinWait.SpinUntil(() => _messages.Count < maxInnerQueueDepth);
                 }
             }, cancellationToken);
-
         }
 
         private void InitDestination(CancellationToken cancellationToken)
         {
             dstTask = Task.Factory.StartNew(() =>
             {
-                IDataWriter producer;
-
-                switch (_appData.Destination.TypeName)
-                {
-                    case DataPlatformEnum.Kafka:
-                        {
-                            producer = new KafkaProducer();
-                            break;
-                        }
-                    case DataPlatformEnum.RabbitMQ:
-                        {
-
-                            producer = new RabbitProducer();
-                            break;
-                        }
-                    default:
-                        throw new ArgumentException("Unknown Data Platform");
-                }
+                IDataWriter producer = InitProducer();
 
                 while (!cancellationToken.IsCancellationRequested || _messages.Count > 0)
                 {
@@ -101,9 +72,68 @@ namespace MonoStreamAgent
                     {
                         producer.Write(message);
                     }
-                    Task.Delay(10, cancellationToken);
+                    SpinWait.SpinUntil(() => _messages.TryPeek(out MonoDTO tmp));
                 }
             }, cancellationToken);
+        }
+
+        private void InitTransaction(CancellationToken cancellationToken)
+        {
+            var transactedTask = Task.Factory.StartNew(() =>
+                {
+                    IDataReader consumer = InitConsumer();
+                    IDataWriter producer = InitProducer();
+
+                    while (!cancellationToken.IsCancellationRequested)
+                    {
+                        producer.Write(consumer.Read());
+                    }
+                }, cancellationToken);
+        }
+
+        private IDataReader InitConsumer()
+        {
+            IDataReader consumer;
+            switch (_appData.Source.TypeName)
+            {
+                case DataPlatformEnum.Kafka:
+                    {
+                        consumer = new KafkaConsumer(_appData.Source);
+                        break;
+                    }
+                case DataPlatformEnum.RabbitMQ:
+                    {
+                        consumer = new RabbitConsumer(_appData.Source);
+                        break;
+                    }
+                default:
+                    throw new ArgumentException("Unknown Data Platform");
+            }
+
+            return consumer;
+        }
+
+        private IDataWriter InitProducer()
+        {
+            IDataWriter producer;
+            switch (_appData.Destination.TypeName)
+            {
+                case DataPlatformEnum.Kafka:
+                    {
+                        producer = new KafkaProducer(_appData.Destination);
+                        break;
+                    }
+                case DataPlatformEnum.RabbitMQ:
+                    {
+
+                        producer = new RabbitProducer(_appData.Destination);
+                        break;
+                    }
+                default:
+                    throw new ArgumentException("Unknown Data Platform");
+            }
+
+            return producer;
         }
 
         protected override async Task ExecuteAsync(CancellationToken stoppingToken)

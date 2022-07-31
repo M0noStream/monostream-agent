@@ -8,23 +8,22 @@ namespace MonoStreamAgent.Readers
     public class KafkaConsumer : IDataReader, IDisposable
     {
         private IConsumer<string, string> _consumer;
-        public KafkaConsumer()
+        private readonly int _consumeTimeoutMS;
+        public KafkaConsumer(Source _sourceConfig)
         {
-            ClientConfig kConfig = new ClientConfig(new Dictionary<string, string>
-            {
-                {"bootstrap.servers", "localhost:9092"}
-            });
+            _consumeTimeoutMS = _sourceConfig.ConsumeTimeoutMS;
 
-            ConsumerConfig consumerConfig = new ConsumerConfig(kConfig)
+            ConsumerConfig consumerConfig = new ConsumerConfig()
             {
-                GroupId = "M0noStream-Kafka-Rabbit",
-                EnableAutoCommit = false
+                BootstrapServers = _sourceConfig.Cluster,
+                GroupId = _sourceConfig.ConsumerGroup,
+                EnableAutoCommit = _sourceConfig.AutoCommit
             };
 
             ConsumerBuilder<string, string> builder = new ConsumerBuilder<string, string>(consumerConfig);
 
             _consumer = builder.Build();
-            _consumer.Subscribe("sample-messages");
+            _consumer.Subscribe(_sourceConfig.SourceName);
         }
 
         public MonoDTO Read()
@@ -34,7 +33,7 @@ namespace MonoStreamAgent.Readers
             
             while (consumeRes == null)
             {
-                consumeRes = _consumer.Consume(10000);
+                consumeRes = _consumer.Consume(_consumeTimeoutMS);
             }
 
             res.SourceType = DataPlatformEnum.Kafka;
