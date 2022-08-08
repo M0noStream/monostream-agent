@@ -6,13 +6,15 @@ namespace MonoStreamAgent.Writers
 {
     public class KafkaProducer : IDataWriter, IDisposable
     {
+        private readonly string _topic;
         private readonly IProducer<Null, string> _producer;
 
-        public KafkaProducer()
+        public KafkaProducer(Destination _destinationConfig)
         {
+            _topic = _destinationConfig.SourceName;
             ProducerConfig producerConfig = new ProducerConfig
             {
-                BootstrapServers = "localhost:9092"
+                BootstrapServers = _destinationConfig.Cluster
             };
 
             _producer = new ProducerBuilder<Null, string>(producerConfig).Build();
@@ -20,7 +22,7 @@ namespace MonoStreamAgent.Writers
 
         public void Write(MonoDTO data)
         {
-            _producer.Produce("sample-messages", new Message<Null, string> { Value = data.Data });
+            _producer.Produce(_topic, new Message<Null, string> { Value = data.Data });
         }
 
         public void Dispose()

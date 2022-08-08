@@ -7,17 +7,19 @@ namespace MonoStreamAgent.Writers
 {
     public class RabbitProducer : IDataWriter, IDisposable
     {
-        private string _user = "guest";
-        private string _password = "guest";
-        private string _url = "localhost:5672";
-        private string _queue = "my.cars";
+        private readonly string _queue;
+        private readonly string _exchange;
+
         private IConnection _connection;
         private IModel _channel;
 
-        public RabbitProducer()
+        public RabbitProducer(Destination _destinationConfig)
         {
+            _queue = _destinationConfig.SourceName;
+            _exchange = _destinationConfig.Exchange;
+
             ConnectionFactory factory = new ConnectionFactory()
-                        { Uri = new Uri($"amqp://{_user}:{_password}@{_url}") };
+                        { Uri = new Uri($"amqp://{_destinationConfig.Username}:{_destinationConfig.Password}@{_destinationConfig.Cluster}") };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
             _channel.QueueDeclare(_queue,
@@ -33,7 +35,7 @@ namespace MonoStreamAgent.Writers
             // Parsing to byte[]
             byte[] body = Encoding.UTF8.GetBytes(data.Data);
 
-            _channel.BasicPublish("", _queue, null, body);
+            _channel.BasicPublish(_exchange, _queue, null, body);
         }
 
         public void Dispose()

@@ -7,19 +7,21 @@ namespace MonoStreamAgent.Readers
 {
     public class RabbitConsumer : IDataReader, IDisposable
     {
-        private string _user = "guest";
-        private string _password = "guest";
-        private string _url = "localhost:5672";
-        private string _queue = "my.cars";
+        private readonly string _queue;
+        private readonly bool _autoAck;
         private IConnection _connection;
         private IModel _channel;
 
-        public RabbitConsumer()
+        public RabbitConsumer(Source _sourceConfig)
         {
+            _queue = _sourceConfig.SourceName;
+            _autoAck = _sourceConfig.AutoCommit;
+
             ConnectionFactory factory = new ConnectionFactory()
-            { Uri = new Uri($"amqp://{_user}:{_password}@{_url}") };
+            { Uri = new Uri($"amqp://{_sourceConfig.Username}:{_sourceConfig.Password}@{_sourceConfig.Cluster}") };
             _connection = factory.CreateConnection();
             _channel = _connection.CreateModel();
+            
             _channel.QueueDeclare(_queue,
                                  durable: true,
                                  exclusive: false,
@@ -34,7 +36,7 @@ namespace MonoStreamAgent.Readers
 
             while (consumeRes == null)
             {
-                consumeRes = _channel.BasicGet(_queue, true);
+                consumeRes = _channel.BasicGet(_queue, _autoAck);
             }
 
             res.SourceType = DataPlatformEnum.RabbitMQ;
