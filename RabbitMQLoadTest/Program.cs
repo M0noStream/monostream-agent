@@ -11,7 +11,7 @@ namespace RabbitMQLoadTest
             Destination destConf = new()
             {
                 TypeName = DataPlatformEnum.RabbitMQ,
-                Cluster = "100.27.24.141:5672",
+                Cluster = "50.17.169.206:5672",
                 Exchange = "",
                 Username = "admin",
                 Password = "admin",
@@ -24,14 +24,15 @@ namespace RabbitMQLoadTest
             {
                 SourceType = DataPlatformEnum.RabbitMQ
             };
-
+            Console.WriteLine("Starting write messages");
             int maxMessages = 100000;
-            for (int i = 0; i < maxMessages; i++)
+            int i;
+            for (i = 1; i <= maxMessages; i++)
             {
                 message.Data = $"Message number [{i}/{maxMessages}]";
                 loadTest.Write(message);
             }
-
+            Console.WriteLine($"Finished writing messages. Last message id is {i}");
             Console.ReadLine();
         }
     }
