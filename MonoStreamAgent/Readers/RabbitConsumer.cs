@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Text;
+using Microsoft.Extensions.Logging;
 using MonoStreamAgent.Common;
 using RabbitMQ.Client;
 
@@ -11,9 +12,13 @@ namespace MonoStreamAgent.Readers
         private readonly bool _autoAck;
         private IConnection _connection;
         private IModel _channel;
+        private readonly ILogger<Worker> _logger;
 
-        public RabbitConsumer(Source _sourceConfig)
+        public RabbitConsumer(ILogger<Worker> logger,Source _sourceConfig)
         {
+            _logger = logger;
+
+            _logger.LogInformation("[RabbitConsumer] Starting RabbitConsumer");
             _queue = _sourceConfig.SourceName;
             _autoAck = _sourceConfig.AutoCommit;
 

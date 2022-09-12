@@ -42,7 +42,10 @@ namespace MonoStreamAgent
             .UseWindowsService()
                 .ConfigureServices((hostContext, services) =>
                 {
-                    IConfiguration configuration = hostContext.Configuration;
+                    var configBuilder = new ConfigurationBuilder()
+                                        .AddJsonFile("appsettings.json", optional: false, reloadOnChange: true);
+
+                    IConfiguration configuration = configBuilder.Build();
 
                     services.Configure<AppData>(configuration.GetSection(nameof(AppData)));
 

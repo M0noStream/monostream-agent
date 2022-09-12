@@ -29,14 +29,25 @@ namespace MonoStreamAgent
 
         public override Task StartAsync(CancellationToken cancellationToken)
         {
-            if (_appData.IsTransacted)
+            try
             {
-                InitTransaction(cancellationToken);
+                _logger.LogInformation("[StartAsync] Starting StartAsync");
+                _logger.LogInformation($"[StartAsync] IsTransacted: {_appData.IsTransacted}");
+
+                if (_appData.IsTransacted)
+                {
+                    InitTransaction(cancellationToken);
+                }
+                else
+                {
+                    InitSource(cancellationToken);
+                    InitDestination(cancellationToken);
+                }
             }
-            else
+            catch (Exception ex)
             {
-                InitSource(cancellationToken);
-                InitDestination(cancellationToken);
+                _logger.LogError(ex, "Exception in StartAsync");
+                throw;
             }
 
             return base.StartAsync(cancellationToken);
@@ -44,6 +55,7 @@ namespace MonoStreamAgent
 
         private void InitSource(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("[InitSource] Starting InitSource");
             srcTask = Task.Factory.StartNew(() =>
             {
                 IDataReader consumer = InitConsumer();
@@ -62,6 +74,7 @@ namespace MonoStreamAgent
 
         private void InitDestination(CancellationToken cancellationToken)
         {
+            _logger.LogInformation("[InitSource] Starting InitDestination");
             dstTask = Task.Factory.StartNew(() =>
             {
                 IDataWriter producer = InitProducer();
@@ -78,7 +91,8 @@ namespace MonoStreamAgent
         }
 
         private void InitTransaction(CancellationToken cancellationToken)
-        {
+        { 
+            _logger.LogInformation("[InitTransaction] Starting InitTransaction");
             var transactedTask = Task.Factory.StartNew(() =>
                 {
                     IDataReader consumer = InitConsumer();
@@ -93,28 +107,33 @@ namespace MonoStreamAgent
 
         private IDataReader InitConsumer()
         {
+            _logger.LogInformation("[InitConsumer] Starting InitConsumer");
+            _logger.LogInformation($"[InitConsumer] Source TypeName: {_appData.Source.TypeName}");
             IDataReader consumer;
             switch (_appData.Source.TypeName)
             {
                 case DataPlatformEnum.Kafka:
                     {
-                        consumer = new KafkaConsumer(_appData.Source);
+                        consumer = new KafkaConsumer(_logger, _appData.Source);
                         break;
                     }
                 case DataPlatformEnum.RabbitMQ:
                     {
-                        consumer = new RabbitConsumer(_appData.Source);
+                        _logger.LogInformation("[InitConsumer] Switch on RabbitMQ InitConsumer");
+                        consumer = new RabbitConsumer(_logger, _appData.Source);
                         break;
                     }
                 default:
                     throw new ArgumentException("Unknown Data Platform");
             }
+            _logger.LogInformation("[InitConsumer] Finished InitConsumer");
 
             return consumer;
         }
 
         private IDataWriter InitProducer()
         {
+            _logger.LogInformation("[InitSource] Starting InitProducer");
             IDataWriter producer;
             switch (_appData.Destination.TypeName)
             {

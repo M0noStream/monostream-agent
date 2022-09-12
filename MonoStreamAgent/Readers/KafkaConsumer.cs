@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using Confluent.Kafka;
+using Microsoft.Extensions.Logging;
 using MonoStreamAgent.Common;
 
 namespace MonoStreamAgent.Readers
@@ -9,8 +10,13 @@ namespace MonoStreamAgent.Readers
     {
         private IConsumer<string, string> _consumer;
         private readonly int _consumeTimeoutMS;
-        public KafkaConsumer(Source _sourceConfig)
+        private readonly ILogger<Worker> _logger;
+
+        public KafkaConsumer(ILogger<Worker> logger, Source _sourceConfig)
         {
+            _logger = logger;
+
+            _logger.LogInformation("[KafkaConsumer] Starting KafkaConsumer");
             _consumeTimeoutMS = _sourceConfig.ConsumeTimeoutMS;
 
             ConsumerConfig consumerConfig = new ConsumerConfig()
